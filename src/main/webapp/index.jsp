@@ -28,7 +28,7 @@
 
         /* Table Colors fixed */
         .table th { background-color: #f8f9fa !important; font-weight: 600 !important; color: #000000 !important; border-bottom: 2px solid #e0e5ec !important; }
-        .table td { color: #000000 !important; }
+        .table td { color: #000000 !important; vertical-align: middle; }
         .table-hover tbody tr:hover { background-color: #f1f5f9 !important; transition: 0.2s; }
 
         /* Custom Styles for the Bill Receipt */
@@ -44,10 +44,22 @@
         Swal.fire({ title: 'Success!', text: 'Reservation saved successfully.', icon: 'success', confirmButtonColor: '#0061f2' });
     });
 </script>
+<% } else if("1".equals(request.getParameter("updated"))) { %>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Swal.fire({ title: 'Updated!', text: 'Reservation updated successfully.', icon: 'success', confirmButtonColor: '#0061f2' });
+    });
+</script>
+<% } else if("1".equals(request.getParameter("staffAdded"))) { %>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Swal.fire({ title: 'Staff Added!', text: 'New staff member registered securely.', icon: 'success', confirmButtonColor: '#0061f2' });
+    });
+</script>
 <% } else if("1".equals(request.getParameter("error"))) { %>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        Swal.fire({ title: 'Error!', text: 'Failed to save reservation.', icon: 'error', confirmButtonColor: '#d33' });
+        Swal.fire({ title: 'Error!', text: 'Action failed. Please try again.', icon: 'error', confirmButtonColor: '#d33' });
     });
 </script>
 <% } %>
@@ -71,9 +83,9 @@
     <div class="alert alert-info border-info shadow-sm d-flex justify-content-between align-items-center mb-4">
         <div>
             <h6 class="fw-bold mb-0">🛡️ Admin Control Panel</h6>
-            <small>You have full access to system settings and user management.</small>
+            <small>You have full access to system settings and Staff management.</small>
         </div>
-        <button class="btn btn-dark btn-sm fw-bold" onclick="Swal.fire('Coming Soon', 'System Settings and User Management will be available in V2.0!', 'info')">Manage System</button>
+        <button class="btn btn-dark btn-sm fw-bold" onclick="openStaffModal()">Manage Staff</button>
     </div>
     <% } %>
 
@@ -120,7 +132,7 @@
                 <h6 class="fw-bold text-primary mb-2">ℹ️ Staff Help Guide</h6>
                 <ul class="small text-muted ps-3 mb-0">
                     <li class="mb-1"><b>Book:</b> Fill the form & click Save.</li>
-                    <li class="mb-1"><b>View:</b> Click 'View' in the table to see full details.</li>
+                    <li class="mb-1"><b>View/Edit/Delete:</b> Use the Action buttons in the table.</li>
                     <li class="mb-1"><b>Bill:</b> Enter 'Res ID' in the Bill section to print receipt.</li>
                 </ul>
             </div>
@@ -146,7 +158,7 @@
                             <th class="text-dark">Room</th>
                             <th class="text-dark">Check-in</th>
                             <th class="text-dark">Status</th>
-                            <th class="text-center text-dark">Action</th>
+                            <th class="text-center text-dark">Actions</th>
                         </tr>
                         </thead>
                         <tbody id="reservationsTableBody">
@@ -155,34 +167,97 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
-<div class="modal fade" id="billModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="staffModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">👥 Manage Staff Members</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row">
+                    <div class="col-md-5 border-end pe-4">
+                        <h6 class="fw-bold mb-3 text-primary">Register New Staff</h6>
+                        <form action="add-staff" method="post">
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Username</label>
+                                <input type="text" name="username" class="form-control" required placeholder="e.g. staff2">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Password</label>
+                                <input type="password" name="password" class="form-control" required placeholder="Will be hashed">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">Create Staff</button>
+                        </form>
+                    </div>
+                    <div class="col-md-7 ps-4">
+                        <h6 class="fw-bold mb-3 text-primary">Active Staff Accounts</h6>
+                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                                </thead>
+                                <tbody id="staffTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-dark text-white d-flex justify-content-center">
-                <h5 class="modal-title fw-bold">OCEAN VIEW RESORT - BILL</h5>
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold">Edit Reservation (#<span id="edit-resNo-display"></span>)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4 bg-white receipt-body" id="printSection">
-                <div class="text-center mb-4">
-                    <strong>====================================</strong><br>
-                    <strong>      OCEAN VIEW RESORT - BILL      </strong><br>
-                    <strong>====================================</strong>
-                </div>
-                <p class="mb-2">Reservation No : <strong id="modalResNo"></strong></p>
-                <p class="mb-2">Guest Name     : <strong id="modalGuestName"></strong></p>
-                <p class="mb-2">Check-in Date  : <strong id="modalCheckIn"></strong></p>
-                <p class="mb-2">Check-out Date : <strong id="modalCheckOut"></strong></p>
-                <div class="receipt-line"></div>
-                <h4 class="fw-bold text-end mt-3 mb-0">TOTAL : Rs. <span id="modalTotalBill"></span></h4>
-                <div class="receipt-line"></div>
-                <div class="text-center mt-3 small">Thank you for staying with us!</div>
-            </div>
-            <div class="modal-footer justify-content-center bg-light">
-                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary px-4 fw-bold" onclick="printReceipt()">Print Bill</button>
+            <div class="modal-body p-4">
+                <form action="update-res" method="post">
+                    <input type="hidden" name="reservationNo" id="edit-resNo">
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Guest Name</label>
+                        <input type="text" name="guestName" id="edit-name" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Contact Number</label>
+                        <input type="text" name="contactNumber" id="edit-contact" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Room Type</label>
+                        <select name="roomId" id="edit-room" class="form-select">
+                            <option value="1">Single - Rs. 5000</option>
+                            <option value="2">Double - Rs. 8000</option>
+                            <option value="3">Suite - Rs. 15000</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Address</label>
+                        <input type="text" name="address" id="edit-address" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label small fw-bold">Check-in</label>
+                            <input type="date" name="checkInDate" id="edit-checkin" class="form-control" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label small fw-bold">Check-out</label>
+                            <input type="date" name="checkOutDate" id="edit-checkout" class="form-control" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 fw-bold shadow-sm">Update Reservation</button>
+                </form>
             </div>
         </div>
     </div>
@@ -216,11 +291,89 @@
     </div>
 </div>
 
+<div class="modal fade" id="billModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white d-flex justify-content-center">
+                <h5 class="modal-title fw-bold">OCEAN VIEW RESORT - BILL</h5>
+            </div>
+            <div class="modal-body p-4 bg-white receipt-body" id="printSection">
+                <div class="text-center mb-4">
+                    <strong>====================================</strong><br>
+                    <strong>      OCEAN VIEW RESORT - BILL      </strong><br>
+                    <strong>====================================</strong>
+                </div>
+                <p class="mb-2">Reservation No : <strong id="modalResNo"></strong></p>
+                <p class="mb-2">Guest Name     : <strong id="modalGuestName"></strong></p>
+                <p class="mb-2">Check-in Date  : <strong id="modalCheckIn"></strong></p>
+                <p class="mb-2">Check-out Date : <strong id="modalCheckOut"></strong></p>
+                <div class="receipt-line"></div>
+                <h4 class="fw-bold text-end mt-3 mb-0">TOTAL : Rs. <span id="modalTotalBill"></span></h4>
+                <div class="receipt-line"></div>
+                <div class="text-center mt-3 small">Thank you for staying with us!</div>
+            </div>
+            <div class="modal-footer justify-content-center bg-light">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary px-4 fw-bold" onclick="printReceipt()">Print Bill</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     let reservationsList = [];
 
+    // --- STAFF MANAGEMENT FUNCTIONS --- //
+    async function openStaffModal() {
+        await fetchStaffList(); // load data before opening
+        new bootstrap.Modal(document.getElementById('staffModal')).show();
+    }
+
+    async function fetchStaffList() {
+        try {
+            const res = await fetch('list-staff');
+            const data = await res.json();
+            const tbody = document.getElementById('staffTableBody');
+            tbody.innerHTML = '';
+            data.forEach(staff => {
+                tbody.innerHTML += '<tr>' +
+                    '<td>' + staff.id + '</td>' +
+                    '<td class="fw-bold">' + staff.username + '</td>' +
+                    '<td class="text-center">' +
+                    '<button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteStaff(' + staff.id + ')">Remove</button>' +
+                    '</td>' +
+                    '</tr>';
+            });
+        } catch(e) { console.error('Error fetching staff', e); }
+    }
+
+    function deleteStaff(id) {
+        Swal.fire({
+            title: 'Remove Staff?',
+            text: "Are you sure you want to delete this account?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('delete-staff?id=' + id)
+                    .then(r => r.json())
+                    .then(d => {
+                        if(d.success) {
+                            Swal.fire('Removed!', 'Staff account deleted.', 'success');
+                            fetchStaffList(); // Refresh staff table
+                        } else {
+                            Swal.fire('Error!', 'Could not delete.', 'error');
+                        }
+                    });
+            }
+        });
+    }
+
+    // --- RESERVATION FUNCTIONS --- //
     async function fetchAllReservations() {
         try {
             const response = await fetch('all-reservations');
@@ -232,11 +385,12 @@
 
             data.forEach(res => {
                 let roomName = res.roomId === 1 ? 'Single' : (res.roomId === 2 ? 'Double' : 'Suite');
-
                 let statusText = res.status ? res.status.toUpperCase() : 'PENDING';
                 let badgeColor = statusText === 'PAID' ? 'bg-success text-white' : 'bg-warning text-dark';
 
-                let actionBtn = '<button class="btn btn-sm btn-outline-primary fw-bold px-3 shadow-sm" onclick="viewReservation(' + res.reservationNo + ')">View</button>';
+                let actionBtn = '<button class="btn btn-sm btn-outline-primary fw-bold px-2 m-1 shadow-sm" onclick="viewReservation(' + res.reservationNo + ')">View</button>' +
+                    '<button class="btn btn-sm btn-outline-warning fw-bold px-2 m-1 shadow-sm text-dark" onclick="openEditModal(' + res.reservationNo + ')">Edit</button>' +
+                    '<button class="btn btn-sm btn-outline-danger fw-bold px-2 m-1 shadow-sm" onclick="deleteReservation(' + res.reservationNo + ')">Delete</button>';
 
                 let row = '<tr>' +
                     '<td><span class="badge bg-secondary">#' + res.reservationNo + '</span></td>' +
@@ -258,7 +412,6 @@
         const res = reservationsList.find(r => r.reservationNo === id);
         if(res) {
             let roomName = res.roomId === 1 ? 'Single (Rs. 5000)' : (res.roomId === 2 ? 'Double (Rs. 8000)' : 'Suite (Rs. 15000)');
-
             let statusText = res.status ? res.status.toUpperCase() : 'PENDING';
             let badgeColor = statusText === 'PAID' ? 'bg-success text-white' : 'bg-warning text-dark';
 
@@ -280,6 +433,50 @@
             var viewPopup = new bootstrap.Modal(document.getElementById('viewModal'));
             viewPopup.show();
         }
+    }
+
+    function openEditModal(id) {
+        const res = reservationsList.find(r => r.reservationNo === id);
+        if(res) {
+            document.getElementById('edit-resNo').value = res.reservationNo;
+            document.getElementById('edit-resNo-display').innerText = res.reservationNo;
+            document.getElementById('edit-name').value = res.guestName;
+            document.getElementById('edit-contact').value = res.contactNumber;
+            document.getElementById('edit-room').value = res.roomId;
+            document.getElementById('edit-address').value = res.address;
+            document.getElementById('edit-checkin').value = res.checkInDate;
+            document.getElementById('edit-checkout').value = res.checkOutDate;
+
+            var editPopup = new bootstrap.Modal(document.getElementById('editModal'));
+            editPopup.show();
+        }
+    }
+
+    function deleteReservation(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this! (ID: " + id + ")",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('delete-res?resNo=' + id)
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            Swal.fire('Deleted!', 'Reservation has been deleted.', 'success');
+                            fetchAllReservations();
+                        } else {
+                            Swal.fire('Error!', 'Failed to delete.', 'error');
+                        }
+                    }).catch(e => {
+                    Swal.fire('Error!', 'Connection error.', 'error');
+                });
+            }
+        });
     }
 
     async function fetchBill() {
