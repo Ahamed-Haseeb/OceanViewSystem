@@ -35,6 +35,14 @@ public class ReservationController extends HttpServlet {
             Date checkIn = Date.valueOf(request.getParameter("checkInDate"));
             Date checkOut = Date.valueOf(request.getParameter("checkOutDate"));
 
+            // --- NEW: ADVANCED DATE VALIDATION ---
+            if (!checkOut.after(checkIn)) {
+                // Check-out date is not after Check-in date!
+                response.sendRedirect("index.jsp?error=date");
+                return; // Stop the process
+            }
+            // -------------------------------------
+
             Reservation reservation = new Reservation(name, address, contact, roomId, checkIn, checkOut);
 
             if (path.equals("/reserve")) {

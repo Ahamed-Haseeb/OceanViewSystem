@@ -56,6 +56,12 @@
         Swal.fire({ title: 'Staff Added!', text: 'New staff member registered securely.', icon: 'success', confirmButtonColor: '#0061f2' });
     });
 </script>
+<% } else if("date".equals(request.getParameter("error"))) { %>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Swal.fire({ title: 'Invalid Dates!', text: 'Check-out date must be AFTER the Check-in date.', icon: 'warning', confirmButtonColor: '#ffc107' });
+    });
+</script>
 <% } else if("1".equals(request.getParameter("error"))) { %>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
