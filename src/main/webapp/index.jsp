@@ -316,6 +316,7 @@
                     <tr><th class="bg-light">Check-Out</th><td id="v-checkout"></td></tr>
                     <tr><th class="bg-light">Status</th><td><span class="badge" id="v-status"></span></td></tr>
                     <tr><th class="bg-light">Total Bill</th><td id="v-bill" class="fw-bold text-primary"></td></tr>
+                    <tr><th class="bg-light text-secondary">Handled By</th><td id="v-handler" class="text-secondary fw-bold"></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -342,6 +343,9 @@
                 <p class="mb-2">Guest Name     : <strong id="modalGuestName"></strong></p>
                 <p class="mb-2">Check-in Date  : <strong id="modalCheckIn"></strong></p>
                 <p class="mb-2">Check-out Date : <strong id="modalCheckOut"></strong></p>
+
+                <p class="mb-2">Handled By     : <strong id="modalHandler"></strong></p>
+
                 <div class="receipt-line"></div>
                 <h4 class="fw-bold text-end mt-3 mb-0">TOTAL : Rs. <span id="modalTotalBill"></span></h4>
                 <div class="receipt-line"></div>
@@ -360,14 +364,10 @@
 <script>
     let reservationsList = [];
 
-    // --- HELP MODAL --- //
-    function openHelpModal() {
-        new bootstrap.Modal(document.getElementById('helpModal')).show();
-    }
+    function openHelpModal() { new bootstrap.Modal(document.getElementById('helpModal')).show(); }
 
-    // --- STAFF MANAGEMENT FUNCTIONS --- //
     async function openStaffModal() {
-        await fetchStaffList(); // load data before opening
+        await fetchStaffList();
         new bootstrap.Modal(document.getElementById('staffModal')).show();
     }
 
@@ -404,7 +404,7 @@
                     .then(d => {
                         if(d.success) {
                             Swal.fire('Removed!', 'Staff account deleted.', 'success');
-                            fetchStaffList(); // Refresh staff table
+                            fetchStaffList();
                         } else {
                             Swal.fire('Error!', 'Could not delete.', 'error');
                         }
@@ -413,7 +413,6 @@
         });
     }
 
-    // --- RESERVATION FUNCTIONS --- //
     async function fetchAllReservations() {
         try {
             const response = await fetch('all-reservations');
@@ -436,16 +435,13 @@
                     '<td><span class="badge bg-secondary">#' + res.reservationNo + '</span></td>' +
                     '<td class="fw-bold text-dark">' + res.guestName + '</td>' +
                     '<td class="text-dark">' + roomName + '</td>' +
-                    '<td class="text-dark">' + res.checkInDate + '</td>' +
                     '<td><span class="badge ' + badgeColor + '">' + statusText + '</span></td>' +
                     '<td class="text-center">' + actionBtn + '</td>' +
                     '</tr>';
 
                 tableBody.innerHTML += row;
             });
-        } catch (e) {
-            console.error('Error fetching reservations:', e);
-        }
+        } catch (e) { console.error('Error fetching reservations:', e); }
     }
 
     function viewReservation(id) {
@@ -462,6 +458,7 @@
             document.getElementById('v-room').innerText = roomName;
             document.getElementById('v-checkin').innerText = res.checkInDate;
             document.getElementById('v-checkout').innerText = res.checkOutDate;
+            document.getElementById('v-handler').innerText = res.createdBy ? res.createdBy : 'Unknown';
 
             let statusBadge = document.getElementById('v-status');
             statusBadge.innerText = statusText;
@@ -470,8 +467,7 @@
             let billAmount = res.totalBill > 0 ? 'Rs. ' + res.totalBill.toLocaleString('en-US', {minimumFractionDigits: 1}) : 'Not Calculated Yet';
             document.getElementById('v-bill').innerText = billAmount;
 
-            var viewPopup = new bootstrap.Modal(document.getElementById('viewModal'));
-            viewPopup.show();
+            new bootstrap.Modal(document.getElementById('viewModal')).show();
         }
     }
 
@@ -487,8 +483,7 @@
             document.getElementById('edit-checkin').value = res.checkInDate;
             document.getElementById('edit-checkout').value = res.checkOutDate;
 
-            var editPopup = new bootstrap.Modal(document.getElementById('editModal'));
-            editPopup.show();
+            new bootstrap.Modal(document.getElementById('editModal')).show();
         }
     }
 
@@ -512,9 +507,7 @@
                         } else {
                             Swal.fire('Error!', 'Failed to delete.', 'error');
                         }
-                    }).catch(e => {
-                    Swal.fire('Error!', 'Connection error.', 'error');
-                });
+                    });
             }
         });
     }
@@ -534,10 +527,10 @@
                 document.getElementById('modalGuestName').innerText = data.guestName;
                 document.getElementById('modalCheckIn').innerText = data.checkInDate;
                 document.getElementById('modalCheckOut').innerText = data.checkOutDate;
+                document.getElementById('modalHandler').innerText = data.createdBy ? data.createdBy : 'Unknown';
                 document.getElementById('modalTotalBill').innerText = data.totalBill.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
 
-                var billPopup = new bootstrap.Modal(document.getElementById('billModal'));
-                billPopup.show();
+                new bootstrap.Modal(document.getElementById('billModal')).show();
 
                 document.getElementById('resNoInput').value = '';
                 fetchAllReservations();

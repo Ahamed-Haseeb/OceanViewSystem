@@ -15,7 +15,6 @@ import java.io.PrintWriter;
 import java.sql.Date;
 import java.util.List;
 
-// Added new endpoints for updating and deleting
 @WebServlet(name = "ReservationController", urlPatterns = {"/reserve", "/bill", "/all-reservations", "/update-res", "/delete-res"})
 public class ReservationController extends HttpServlet {
 
@@ -35,22 +34,23 @@ public class ReservationController extends HttpServlet {
             Date checkIn = Date.valueOf(request.getParameter("checkInDate"));
             Date checkOut = Date.valueOf(request.getParameter("checkOutDate"));
 
-            // --- NEW: ADVANCED DATE VALIDATION ---
+            // ADVANCED DATE VALIDATION
             if (!checkOut.after(checkIn)) {
-                // Check-out date is not after Check-in date!
                 response.sendRedirect("index.jsp?error=date");
-                return; // Stop the process
+                return;
             }
-            // -------------------------------------
 
             Reservation reservation = new Reservation(name, address, contact, roomId, checkIn, checkOut);
 
+            // GET LOGGED IN STAFF/ADMIN USERNAME FROM SESSION
+            String handledBy = (String) request.getSession().getAttribute("loggedUser");
+            if (handledBy == null) handledBy = "Unknown";
+            reservation.setCreatedBy(handledBy);
+
             if (path.equals("/reserve")) {
-                // ADD NEW
                 boolean success = reservationDAO.addReservation(reservation);
                 response.sendRedirect("index.jsp?" + (success ? "success=1" : "error=1"));
             } else {
-                // UPDATE EXISTING
                 int resNo = Integer.parseInt(request.getParameter("reservationNo"));
                 reservation.setReservationNo(resNo);
                 boolean success = reservationDAO.updateReservation(reservation);
@@ -75,7 +75,6 @@ public class ReservationController extends HttpServlet {
             out.print(gson.toJson(list));
 
         } else if (path.equals("/delete-res")) {
-            // DELETE RESERVATION VIA AJAX
             int resNo = Integer.parseInt(request.getParameter("resNo"));
             boolean success = reservationDAO.deleteReservation(resNo);
             out.print("{\"success\": " + success + "}");

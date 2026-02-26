@@ -16,13 +16,12 @@ import java.util.logging.Logger;
 
 public class ReservationDAO {
 
-    // Advanced Logger for Master's standard error tracking
     private static final Logger LOGGER = Logger.getLogger(ReservationDAO.class.getName());
 
-    // 1. Add a new reservation
+    // 1. Add a new reservation (Now tracks Staff Member)
     public boolean addReservation(Reservation reservation) {
         Connection conn = DBConnection.getInstance().getConnection();
-        String sql = "INSERT INTO reservations (guest_name, address, contact_number, room_id, check_in_date, check_out_date) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO reservations (guest_name, address, contact_number, room_id, check_in_date, check_out_date, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, reservation.getGuestName());
@@ -31,6 +30,7 @@ public class ReservationDAO {
             pstmt.setInt(4, reservation.getRoomId());
             pstmt.setDate(5, reservation.getCheckInDate());
             pstmt.setDate(6, reservation.getCheckOutDate());
+            pstmt.setString(7, reservation.getCreatedBy()); // Save Staff Username
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error adding reservation", e);
@@ -58,6 +58,7 @@ public class ReservationDAO {
                 res.setCheckOutDate(rs.getDate("check_out_date"));
                 res.setTotalBill(rs.getDouble("total_bill"));
                 res.setStatus(rs.getString("status"));
+                res.setCreatedBy(rs.getString("created_by")); // Get Staff Username
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error fetching reservation ID: " + reservationNo, e);
@@ -100,6 +101,7 @@ public class ReservationDAO {
                 res.setCheckOutDate(rs.getDate("check_out_date"));
                 res.setTotalBill(rs.getDouble("total_bill"));
                 res.setStatus(rs.getString("status"));
+                res.setCreatedBy(rs.getString("created_by")); // Get Staff Username
                 list.add(res);
             }
         } catch (SQLException e) {
@@ -108,12 +110,11 @@ public class ReservationDAO {
         return list;
     }
 
-    // --- NEW FEATURES ---
-
     // 5. Update Existing Reservation
     public boolean updateReservation(Reservation reservation) {
         Connection conn = DBConnection.getInstance().getConnection();
-        String sql = "UPDATE reservations SET guest_name=?, address=?, contact_number=?, room_id=?, check_in_date=?, check_out_date=? WHERE reservation_no=?";
+        // Automatically updates 'created_by' to the staff member who last edited it
+        String sql = "UPDATE reservations SET guest_name=?, address=?, contact_number=?, room_id=?, check_in_date=?, check_out_date=?, created_by=? WHERE reservation_no=?";
         try {
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, reservation.getGuestName());
@@ -122,7 +123,8 @@ public class ReservationDAO {
             pstmt.setInt(4, reservation.getRoomId());
             pstmt.setDate(5, reservation.getCheckInDate());
             pstmt.setDate(6, reservation.getCheckOutDate());
-            pstmt.setInt(7, reservation.getReservationNo());
+            pstmt.setString(7, reservation.getCreatedBy());
+            pstmt.setInt(8, reservation.getReservationNo());
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error updating reservation ID: " + reservation.getReservationNo(), e);
