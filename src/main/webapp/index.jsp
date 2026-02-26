@@ -34,6 +34,9 @@
         /* Custom Styles for the Bill Receipt */
         .receipt-body { font-family: 'Courier New', Courier, monospace; font-size: 1.1rem; color: #000; }
         .receipt-line { border-top: 2px dashed #000; margin: 15px 0; }
+
+        /* Custom styling for the Help Modal List */
+        .help-list li { margin-bottom: 10px; line-height: 1.6; }
     </style>
 </head>
 <body onload="fetchAllReservations()">
@@ -85,20 +88,28 @@
 
 <div class="container my-5">
 
-    <% if("ADMIN".equals(session.getAttribute("userRole"))) { %>
     <div class="alert alert-info border-info shadow-sm d-flex justify-content-between align-items-center mb-4">
         <div>
+            <% if("ADMIN".equals(session.getAttribute("userRole"))) { %>
             <h6 class="fw-bold mb-0">🛡️ Admin Control Panel</h6>
             <small>You have full access to system settings and Staff management.</small>
+            <% } else { %>
+            <h6 class="fw-bold mb-0">👋 Staff Dashboard</h6>
+            <small>Manage reservations and handle guest check-outs.</small>
+            <% } %>
         </div>
-        <button class="btn btn-dark btn-sm fw-bold" onclick="openStaffModal()">Manage Staff</button>
+        <div class="d-flex flex-column gap-2">
+            <% if("ADMIN".equals(session.getAttribute("userRole"))) { %>
+            <button class="btn btn-dark btn-sm fw-bold shadow-sm" onclick="openStaffModal()">👥 Manage Staff</button>
+            <% } %>
+            <button class="btn btn-secondary btn-sm fw-bold shadow-sm" onclick="openHelpModal()">ℹ️ Help Guide</button>
+        </div>
     </div>
-    <% } %>
 
     <div class="row g-4">
-        <div class="col-lg-5 col-md-12">
-            <div class="card p-4">
-                <h5 class="fw-bold mb-3 text-primary">Add New Reservation</h5>
+        <div class="col-lg-4 col-md-12">
+            <div class="card p-4 shadow-sm">
+                <h5 class="fw-bold mb-3 text-primary">Add Reservation</h5>
                 <form action="reserve" method="post">
                     <div class="mb-2">
                         <label class="form-label small fw-bold">Guest Name</label>
@@ -130,25 +141,17 @@
                             <input type="date" name="checkOutDate" class="form-control" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">Save Reservation</button>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">Save Booking</button>
                 </form>
-            </div>
-
-            <div class="card p-4 bg-light">
-                <h6 class="fw-bold text-primary mb-2">ℹ️ Staff Help Guide</h6>
-                <ul class="small text-muted ps-3 mb-0">
-                    <li class="mb-1"><b>Book:</b> Fill the form & click Save.</li>
-                    <li class="mb-1"><b>View/Edit/Delete:</b> Use the Action buttons in the table.</li>
-                    <li class="mb-1"><b>Bill:</b> Enter 'Res ID' in the Bill section to print receipt.</li>
-                </ul>
             </div>
         </div>
 
-        <div class="col-lg-7 col-md-12">
+        <div class="col-lg-8 col-md-12">
+
             <div class="card p-4 mb-4 border-primary shadow-sm" style="border-width: 2px;">
                 <h5 class="fw-bold mb-3 text-primary">Calculate & Print Bill</h5>
                 <div class="input-group">
-                    <input type="number" id="resNoInput" class="form-control form-control-lg" placeholder="Enter Reservation ID (e.g. 1)">
+                    <input type="number" id="resNoInput" class="form-control" placeholder="Enter Reservation ID (e.g. 1)">
                     <button class="btn btn-primary px-4 fw-bold" onclick="fetchBill()">Generate Bill</button>
                 </div>
             </div>
@@ -162,7 +165,6 @@
                             <th class="text-dark">ID</th>
                             <th class="text-dark">Guest Name</th>
                             <th class="text-dark">Room</th>
-                            <th class="text-dark">Check-in</th>
                             <th class="text-dark">Status</th>
                             <th class="text-center text-dark">Actions</th>
                         </tr>
@@ -170,6 +172,33 @@
                         <tbody id="reservationsTableBody">
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="helpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title fw-bold">ℹ️ Ocean View Resort - System Help Guide</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-dark">
+                <h6 class="fw-bold text-primary mb-3">How to use the system:</h6>
+                <ul class="help-list">
+                    <li><b>🏨 Add a Reservation:</b> Fill out all the details in the "Add Reservation" form on the left. Make sure the Check-out date is AFTER the Check-in date, then click <b>Save Booking</b>.</li>
+                    <li><b>👀 View Details:</b> Click the <span class="badge border border-primary text-primary">View</span> button in the table to see full information about a guest and their room.</li>
+                    <li><b>✏️ Edit Booking:</b> Made a mistake? Click the <span class="badge border border-warning text-dark">Edit</span> button to change guest details, room types, or dates.</li>
+                    <li><b>🗑️ Delete Booking:</b> Click the <span class="badge border border-danger text-danger">Delete</span> button to permanently remove a reservation. You will be asked to confirm first.</li>
+                    <li><b>🧾 Generate Bill:</b> Check the 'ID' of the reservation from the table, type it into the <b>Calculate & Print Bill</b> box, and click Generate. A detailed printable receipt will appear!</li>
+                    <% if("ADMIN".equals(session.getAttribute("userRole"))) { %>
+                    <li><b>👥 Admin - Manage Staff:</b> As an Admin, you can click the "Manage Staff" button at the top to securely register new staff members or remove old accounts.</li>
+                    <% } %>
+                </ul>
+                <div class="alert alert-light border mt-4 mb-0 text-center small">
+                    Always remember to click the <b>Logout</b> button when leaving the counter to keep the system secure!
                 </div>
             </div>
         </div>
@@ -330,6 +359,11 @@
 
 <script>
     let reservationsList = [];
+
+    // --- HELP MODAL --- //
+    function openHelpModal() {
+        new bootstrap.Modal(document.getElementById('helpModal')).show();
+    }
 
     // --- STAFF MANAGEMENT FUNCTIONS --- //
     async function openStaffModal() {
