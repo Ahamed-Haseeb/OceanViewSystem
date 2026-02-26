@@ -37,4 +37,33 @@ public class UserDAOTest {
         assertNotNull(staffList, "Staff list should not be null");
         assertTrue(staffList.size() > 0, "Staff list should contain at least one staff member");
     }
+
+    @Test
+    public void testDeleteStaffSuccess() {
+        String testUsername = "todelete_" + System.currentTimeMillis();
+        userDAO.addStaff(testUsername, "pass123");
+
+        List<User> staffList = userDAO.getAllStaff();
+        int idToDelete = -1;
+        for(User u : staffList) {
+            if(u.getUsername().equals(testUsername)) {
+                idToDelete = u.getId();
+                break;
+            }
+        }
+        boolean isDeleted = userDAO.deleteStaff(idToDelete);
+        assertTrue(isDeleted, "Staff should be deleted successfully");
+    }
+
+    @Test
+    public void testDeleteStaffFailure() {
+        boolean isDeleted = userDAO.deleteStaff(-999);
+        assertFalse(isDeleted, "Deleting non-existent staff should fail");
+    }
+
+    @Test
+    public void testGetAllStaff() {
+        List<User> staffList = userDAO.getAllStaff();
+        assertNotNull(staffList, "Staff list should not be null");
+    }
 }
