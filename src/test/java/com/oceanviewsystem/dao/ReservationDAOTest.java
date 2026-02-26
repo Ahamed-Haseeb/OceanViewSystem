@@ -3,30 +3,41 @@ package com.oceanviewsystem.dao;
 import com.oceanviewsystem.model.Reservation;
 import org.junit.jupiter.api.Test;
 import java.sql.Date;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ReservationDAOTest {
 
+    private final ReservationDAO reservationDAO = new ReservationDAO();
+
     @Test
-    public void testAddReservationSuccess() {
-        // 1. Create the DAO object to test
-        ReservationDAO reservationDAO = new ReservationDAO();
+    public void testReservationLifecycle() {
+        // 1. Test ADD Reservation
+        Reservation newRes = new Reservation("Test Guest", "Test Address", "0711111111", 1, Date.valueOf("2026-05-01"), Date.valueOf("2026-05-05"));
+        boolean isAdded = reservationDAO.addReservation(newRes);
+        assertTrue(isAdded, "Reservation should be added successfully");
 
-        // 2. Setup Check-in and Check-out dates
-        // Format should be "YYYY-MM-DD"
-        Date checkIn = Date.valueOf("2026-03-01");
-        Date checkOut = Date.valueOf("2026-03-05");
+        // Fetch all reservations to get the ID of the newly added one
+        List<Reservation> list = reservationDAO.getAllReservations();
+        assertNotNull(list);
+        assertTrue(list.size() > 0);
 
-        // 3. Create a new Reservation object with dummy guest details
-        // Note: roomId 1 is the 'Single' room we added in our SQL script earlier
-        Reservation newReservation = new Reservation("Kamal Perera", "Galle", "0771234567", 1, checkIn, checkOut);
+        // Get the most recent reservation ID
+        int latestResId = list.get(0).getReservationNo();
 
-        // 4. Try to add the reservation to the database
-        boolean isInserted = reservationDAO.addReservation(newReservation);
+        // 2. Test UPDATE Reservation
+        Reservation resToUpdate = reservationDAO.getReservationById(latestResId);
+        assertNotNull(resToUpdate);
+        resToUpdate.setGuestName("Updated Test Guest");
+        boolean isUpdated = reservationDAO.updateReservation(resToUpdate);
+        assertTrue(isUpdated, "Reservation should be updated successfully");
 
-        // 5. Check if it returns 'true' (which means successful insert)
-        assertTrue(isInserted, "Test Failed: Could not add the reservation to the database.");
+        // Verify update
+        Reservation verifyRes = reservationDAO.getReservationById(latestResId);
+        assertEquals("Updated Test Guest", verifyRes.getGuestName(), "Guest name should match updated name");
 
-        System.out.println("Test Passed: New reservation added successfully to the database!");
+        // 3. Test DELETE Reservation (Cleanup)
+        boolean isDeleted = reservationDAO.deleteReservation(latestResId);
+        assertTrue(isDeleted, "Reservation should be deleted successfully");
     }
 }
